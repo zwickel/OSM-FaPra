@@ -58,7 +58,7 @@ $ make
 
 `$ ./main.out /path/to/germany.osm.pbf`
 
-After the graph has been read and the web server has started your console should output:  
-`Server startet and available at http://localhost:8091`
+After the graph has been read and the web server starts your console should output:  
+`starting server at http://localhost:8091`
 
 You can access the server with your browser at `http://localhost:8091`
