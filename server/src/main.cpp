@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 
     readMapData(fileName, &graph);
     WebServer ws;
-    std::cout << "starting server at http://localhost:8091" << std::endl;
+    std::cout << std::endl << "starting server at http://localhost:8091" << std::endl;
     ws.start(&graph);
 
     // std::string input;
