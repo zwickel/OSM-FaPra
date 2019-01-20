@@ -1,12 +1,59 @@
 # OSM-FaPra
 
-### initializing osmpbf
+## How-To build
 
-`git clone https://github.com/inphos42/osmpbf`  
-`cd osmpbf`  
-`git submodule init`  
-`git pull --recurse-submodules`  
-`mkdir build`  
-`cd build`  
-`cmake ..`  
-`make`  
+### Dependencies
+
+#### for osmpbf
+
+* protobuf
+* zlib
+
+#### for Simple-Web-Server
+
+* Boost.Asio or standalone Asio
+
+### Unzip
+
+Unzip the ma.zip archive in a folder of your choice.
+
+### Get dependent repos
+
+#### osmpbf
+
+```sh
+$ cd OSM-FaPra/server/lib
+
+$ git clone https://github.com/inphos42/osmpbf
+$ cd osmpbf
+$ git submodule init
+$ git pull --recurse-submodules
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+```  
+
+#### Simple-Web-Server
+
+```sh
+$ cd ../../ # navigate back to lib-folder
+
+$ git clone https://github.com/eidheim/Simple-Web-Server.git
+$ cd Simple-Web-Server
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+```
+
+### Building the actual project
+
+```sh
+$ cd ../../src
+$ make
+```
+
+## Start
+
+`$ ./main.out /path/to/germany.osm.pbf`
