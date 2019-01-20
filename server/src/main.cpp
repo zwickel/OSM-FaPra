@@ -1,0 +1,90 @@
+#include "include/Node.h"
+#include "include/Edge.h"
+#include "include/Graph.h"
+#include "include/GraphReader.h"
+#include "include/WebServer.h"
+#include <chrono>
+#include <iostream>
+#include <string>
+#include <osmpbf/parsehelpers.h>
+#include <osmpbf/inode.h>
+#include <osmpbf/iway.h>
+#include <osmpbf/irelation.h>
+#include <osmpbf/filter.h>
+
+void readMapData(std::string fileName) {
+  Graph graph;
+  graph.nodesCounter = 0;
+  graph.edgesCounter = 0;
+  GraphReader gr;
+
+  auto graphInputStartTime = std::chrono::high_resolution_clock::now();
+  
+  auto edgeStartTime = std::chrono::high_resolution_clock::now();
+  gr.readEdges(fileName, &graph);
+  graph.sortEdges();
+  graph.genOffset();
+  auto edgeEndTime = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> edgeDuration = edgeEndTime - edgeStartTime;
+  std::cout << "--> reading/writing edges took " << edgeDuration.count() << " ms" << std::endl;
+  
+  auto nodeStartTime = std::chrono::high_resolution_clock::now();
+  gr.fillNodes(fileName, &graph);
+  auto nodeEndTime = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> nodeDuration = nodeEndTime - nodeStartTime;
+  std::cout << "--> writing nodes took " << nodeDuration.count() << " ms" << std::endl;
+
+  auto graphInputEndTime = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> graphInputDuration = graphInputEndTime - graphInputStartTime;
+  std::cout << "--> graph input took " << graphInputDuration.count() << " ms" << std::endl;
+
+  // table output
+  std::cout << std::endl<< " type  |" << " amount" << std::endl;  // output
+  std::cout << "-------|---------" << std::endl;  // output
+  std::cout << " nodes | " << graph.nodesCounter << std::endl;  // output
+  std::cout << " edges | " << graph.edgesCounter << std::endl;  // output
+}
+
+int main(int argc, char *argv[]) {
+  std::string fileName;
+  std::cout << "#args: " << argc << std::endl;
+  if (argc > 1) {
+    std::cout << "OSM map filename: " << argv[1] << std::endl;
+    fileName = argv[1];
+    
+    std::string input;
+    
+    do
+    {
+      std::cout << std::endl << "MAIN MENU:" << std::endl;
+      std::cout << "# press -r- to read the graph data" << std::endl;
+      std::cout << "# press -w- to start the web server" << std::endl;
+      std::cout << "# press -s- to stop the web server" << std::endl;
+      std::cout << "# press -q- to quit" << std::endl;
+      
+      std::cin >> input;
+      
+      if (input == "r") {
+        std::cout << "reading data..." << std::endl;
+        readMapData(fileName);
+      }
+      else if(input == "w") {
+        std::cout << "starting web server..." << std::endl;
+        WebServer ws;
+        ws.start();
+      }
+      else if (input == "s"){
+        /* code */
+      }
+      
+    } while (input != "q");
+
+    
+
+  } else {
+    std::cout << "OSM map file needed!" << std::endl;
+    return -1;
+  }
+
+  return 0;
+}
