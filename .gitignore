@@ -33,3 +33,6 @@
 
 # lib
 server/lib/*
+
+# visual studio config files
+.vscode/*

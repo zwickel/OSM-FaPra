@@ -1,8 +1,9 @@
 #include "WebServer.h"
 
 using namespace std;
+using namespace boost::property_tree; // for requests with .json
 
-void WebServer::start() {
+void WebServer::start(Graph * graph) {
   HttpServer server;
   server.config.port = 8091;
 
@@ -81,6 +82,52 @@ void WebServer::start() {
   server.resource["^/match/([0-9]+)$"]["GET"] = [](shared_ptr<HttpServer::Response> response, shared_ptr<HttpServer::Request> request) {
     response->write(request->path_match[1]);
   };
+
+  // POST-request
+  server.resource["^/getnearesttaginfo$"]["POST"] = [&](shared_ptr<HttpServer::Response> response, shared_ptr<HttpServer::Request> request) {
+    
+    try
+    {
+      ptree pt;
+      read_json(request->content, pt);
+
+      double lon = pt.get<double>("lon");
+      double lat = pt.get<double>("lat");;
+
+      Node nearestNode = graph->getNearestNode(lon, lat);
+
+      string jsonResponse = "{\"coords\": {\"lon\":" + to_string(nearestNode.lon) + ", \"lat\":" + to_string(nearestNode.lat) + "}}";
+
+      *response << "HTTP/1.1 200 OK\r\n" << "Content-length: " << jsonResponse.length() << "\r\n\r\n" << jsonResponse;
+    }
+    catch(const std::exception& e)
+    {
+      std::cerr << e.what() << '\n';
+      *response << "HTTP/1.1 400 Bad Request\r\nContent-Length: " << strlen(e.what()) << "\r\n\r\n" << e.what();
+    }
+    
+  };
+
+  // GET-request to get info of nearest tag
+  // server.resource["^/getnearesttaginfo/[0-9]+([\\.\\,][0-9])?/[0-9]+([\\.\\,][0-9])?$"]["GET"] = [](shared_ptr<HttpServer::Response> response, shared_ptr<HttpServer::Request> request) {
+  //   stringstream stream;
+  //   double lon;
+  //   double lat;
+  //   auto query_fields = request->parse_query_string();
+  //   for(auto &field : query_fields) {
+  //     std::cout << field.first << ": " << field.second << "<br>";
+  //     if (field.first == "lon") {
+  //       lon = stod(field.second);
+  //     } else if (field.first == "lat") {
+  //       lat = stod(field.second);
+  //     }
+  //   }
+
+
+  //   // request->query_string
+
+  //   response->write(request->path_match[1]);
+  // };
 
   server_thread.join();
 }

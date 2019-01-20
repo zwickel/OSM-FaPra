@@ -21,6 +21,16 @@ void GraphReader::parseBlock(osmpbf::PrimitiveBlockInputAdaptor & pbi, Graph * g
       if (roadFilter.matches(way)) {
         // std::cout << "id: " << way.id() << std::endl; // output
         // std::cout << "#tags: " << way.tagsSize() << std::endl; // output
+
+        std::string highwayValue;
+        for(uint32_t i = 0, s = way.tagsSize();  i < s; ++i) {
+          // std::cout << "\t<tag k=" << way.key(i) << " v=" << way.value(i) << ">" << std::endl;  // output
+          if (way.key(i) == "highway") {
+            highwayValue = way.value(i);
+          }
+        }
+        // std::cout << "</way>" << std::endl;
+
         if (way.refsSize()) {
           osmpbf::RefIterator refIter(way.refBegin()), refEnd(way.refEnd());
           // std::cout << typeid(*refIter).name() << std::endl; // output
@@ -46,11 +56,11 @@ void GraphReader::parseBlock(osmpbf::PrimitiveBlockInputAdaptor & pbi, Graph * g
             }
 
             // push edgess
-            graph->edges.push_back(Edge(graph->osmNodeIdVectorIndexMap.find(srcNodeId)->second, graph->osmNodeIdVectorIndexMap.find(*refIter)->second));
+            graph->edges.push_back(Edge(graph->osmNodeIdVectorIndexMap.find(srcNodeId)->second, graph->osmNodeIdVectorIndexMap.find(*refIter)->second, highwayValue));
             graph->edgesCounter++;
 
             if(!oneWayFilter.matches(way)) {
-              graph->edges.push_back(Edge(graph->osmNodeIdVectorIndexMap.find(*refIter)->second, graph->osmNodeIdVectorIndexMap.find(srcNodeId)->second));
+              graph->edges.push_back(Edge(graph->osmNodeIdVectorIndexMap.find(*refIter)->second, graph->osmNodeIdVectorIndexMap.find(srcNodeId)->second, highwayValue));
               graph->edgesCounter++;
             }
 

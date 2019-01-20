@@ -6,6 +6,7 @@
 #include <functional>
 #include <vector>
 #include <map>
+#include <math.h>
 
 #include "Node.h"
 #include "Edge.h"
@@ -21,6 +22,7 @@ struct Graph {
   int edgesCounter;
   void genOffset();
   void sortEdges();
+  Node getNearestNode(double lon, double lat);
 };
 
 #endif // Graph_h

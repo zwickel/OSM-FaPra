@@ -6,7 +6,7 @@ struct compStruct {
   }
 } edgesComparer;
 
-void Graph::sortEdges(){
+void Graph::sortEdges() {
   std::sort(edges.begin(), edges.end(), edgesComparer);
 }
 
@@ -42,4 +42,20 @@ void Graph::genOffset() {
     //   offset.push_back(i);
     // }
   }
+}
+
+Node Graph::getNearestNode(double lon, double lat) {
+  std::vector<Node>::iterator it = nodes.begin();
+  Node result = *it;
+  double distance = sqrt(pow((lon - it->lon), 2.0) + pow((lat - it->lat), 2.0));
+  double currentDistance;
+  for (; it != nodes.end(); it++) {
+    currentDistance = sqrt(pow((lon - it->lon), 2.0) + pow((lat - it->lat), 2.0));
+    if (currentDistance < distance) {
+      distance = currentDistance;
+      result = *it;
+    }
+  }
+
+  return result;
 }
