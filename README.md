@@ -15,7 +15,7 @@
 
 ### Unzip
 
-Unzip the ma.zip archive in a folder of your choice.
+Unzip the osm-fapra-ma.zip archive in a folder of your choice.
 
 ### Get dependent repos
 
