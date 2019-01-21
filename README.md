@@ -17,7 +17,7 @@
 
 Unzip the osm-fapra-ma.zip archive in a folder of your choice.
 
-### Get dependent repos
+### Get and install dependent repos
 
 #### osmpbf
 
@@ -56,7 +56,10 @@ $ make
 
 ## Start
 
-`$ ./main.out /path/to/germany.osm.pbf`
+```bash
+$ cd ../bin
+$ ./main.out /path/to/germany.osm.pbf
+```
 
 After the graph has been read and the web server starts your console should output:  
 `starting server at http://localhost:8091`
