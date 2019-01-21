@@ -23,6 +23,7 @@ struct Graph {
   void genOffset();
   void sortEdges();
   Node getNearestNode(double lon, double lat);
+  Edge getNearestEdge(double lon, double lat);
 };
 
 #endif // Graph_h
