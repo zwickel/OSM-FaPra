@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.3.0/css/ol.css">
   <link rel="stylesheet" href="css/osm-fapra.css" type="text/css"></link>
   <script src="https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.3.0/build/ol.js"></script>
-  <!-- <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous"> -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
 
 </head>
 
@@ -16,27 +16,17 @@
 
   <div id="map" class="map"></div>
   <div id="popup" class="ol-popup">
-    <div id="popup-content">
+    <div id="popup-header"></div>
+    <div id="popup-content" class="ol-popup-content">
       <a href="#" id="popup-closer" class="ol-popup-closer"></a>
       <table id="popup-table">
         <tr>
-          <th></th>
-          <th>
-            <p>You clicked at</p>
-          </th>
-          <th>
-            <p>Nearest node is at</p>
-          </th>
-        </tr>
-        <tr>
           <td>lat:</td>
           <td id="clicked-lat"></td>
-          <td id="nearest-lat"></td>
         </tr>
         <tr>
           <td>lon:</td>
           <td id="clicked-lon"></td>
-          <td id="nearest-lon"></td>
           </tr>
       </table>
     </div>
@@ -46,6 +36,7 @@
   src="https://code.jquery.com/jquery-3.3.1.min.js"
   integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
   crossorigin="anonymous"></script>
+  <script src="https://use.fontawesome.com/615cdbe864.js"></script>
   <script src="js/osm-fapra.js"></script>
 
 </body>

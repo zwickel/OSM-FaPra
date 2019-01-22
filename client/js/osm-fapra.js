@@ -44,30 +44,57 @@ closer.onclick = function() {
   return false;
 };
 
-// var nearestNodeFeature = new ol.Feature({
-//   name: 'nearest node to click'
-// });
+/**
+ * create a marker
+ */
+var marker = new ol.Feature({
+  type: 'geoMarker',
+  geometry: new ol.geom.Point([0,0]),
+  name: 'nearest node to click'
+});
 
-// var nearestNodeStyle = new ol.style.Style({
-//   image: new ol.style.Icon({
-//     text: new ol.style.Text({
-//       text: '\uf3c5',
-//       font: 'normal 18px FontAwesome',
-//     })
-//   })
-// });
+/**
+ * style for marker on map
+ */
+var markerStyle = new ol.style.Style({
+  text: new ol.style.Text({
+    text: '\uf041',
+    font: 'normal 25px FontAwesome',
+    fill: new ol.style.Fill({
+      color: 'red'
+    })
+  })
+});
 
-// nearestNodeFeature.setStyle(nearestNodeStyle);
+/**
+ * append style to marker
+ */
+marker.setStyle(markerStyle);
 
-// var vectorSource = new ol.source.Vector({
-//   features: [nearestNodeFeature]
-// });
+/**
+ * create a source that will contain marker
+ */
+var markerSource = new ol.source.Vector({
+  features: [marker]
+});
 
-// var vectorLayer = new ol.layer.Vector({
+/**
+ * create a layer that will contain the source with the marker
+ */
+var markerLayer = new ol.layer.Vector({
+  source : markerSource
+});
+
+/**
+ * add the layer to the map
+ */
+map.addLayer(markerLayer);
+
+// var edgesLayer = new ol.layer.VectorLayer({
 //   source: vectorSource
 // });
 
-// map.addLayer(vectorLayer);
+// map.addLayer(edgesLayer);
 
 map.on('singleclick', function(e) {
   var coords = e.coordinate;
@@ -77,7 +104,7 @@ map.on('singleclick', function(e) {
 
   $.ajax({
     method: 'POST',
-    url: 'http://localhost:8091/getnearesttaginfo',
+    url: 'http://localhost:8091/getnearestnode',
     data: '{"lon": ' + lonlat[0] + ', "lat": ' + lonlat[1] + '}'
   }).done(function(data, status, xhr) {
     console.log(data);
@@ -86,8 +113,9 @@ map.on('singleclick', function(e) {
     $('#clicked-lon').text(lonlat[0]);
     $('#nearest-lat').text(info.coords.lat);
     $('#nearest-lon').text(info.coords.lon);
+    $('#popup-header').text('clicked at')
     popupOverlay.setPosition(coords);
-    // nearestNodeFeature.setGeometry(new ol.geom.Point(ol.proj.fromLonLat([info.coords.lon, info.coords.lat])));
+    marker.setGeometry(new ol.geom.Point(ol.proj.fromLonLat([info.coords.lon, info.coords.lat])));
   });
 
 });

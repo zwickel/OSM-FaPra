@@ -83,8 +83,12 @@ void WebServer::start(Graph * graph) {
     response->write(request->path_match[1]);
   };
 
-  // POST-request
-  server.resource["^/getnearesttaginfo$"]["POST"] = [&](shared_ptr<HttpServer::Response> response, shared_ptr<HttpServer::Request> request) {
+  /**
+   * POST-request
+   * input coords (lon, lat) where the user clicked
+   * return sends back the coords of the nearest node to the coords from input
+   */  
+  server.resource["^/getnearestnode$"]["POST"] = [&](shared_ptr<HttpServer::Response> response, shared_ptr<HttpServer::Request> request) {
     
     try
     {
@@ -92,11 +96,41 @@ void WebServer::start(Graph * graph) {
       read_json(request->content, pt);
 
       double lon = pt.get<double>("lon");
-      double lat = pt.get<double>("lat");;
+      double lat = pt.get<double>("lat");
 
       Node nearestNode = graph->getNearestNode(lon, lat);
 
       string jsonResponse = "{\"coords\": {\"lon\":" + to_string(nearestNode.lon) + ", \"lat\":" + to_string(nearestNode.lat) + "}}";
+
+      *response << "HTTP/1.1 200 OK\r\n" << "Content-length: " << jsonResponse.length() << "\r\n\r\n" << jsonResponse;
+    }
+    catch(const std::exception& e)
+    {
+      std::cerr << e.what() << '\n';
+      *response << "HTTP/1.1 400 Bad Request\r\nContent-Length: " << strlen(e.what()) << "\r\n\r\n" << e.what();
+    }
+  };
+
+  /**
+   * POST-request
+   * input coords (lon, lat) where the user clicked
+   * return nearest edge (src, tgt) to the coords from input
+   */
+  server.resource["^/getnearestedge$"]["POST"] = [&](shared_ptr<HttpServer::Response> response, shared_ptr<HttpServer::Request> request) {
+    
+    try
+    {
+      ptree pt;
+      read_json(request->content, pt);
+
+      double lon = pt.get<double>("lon");
+      double lat = pt.get<double>("lat");
+
+      Edge nearestEdge = graph->getNearestEdge(lon, lat);
+      Node src = graph->nodes[nearestEdge.srcNodeId];
+      Node tgt = graph->nodes[nearestEdge.tgtNodeId];
+
+      string jsonResponse = "{\"edge\":{\"src\":{\"lon\":" + to_string(src.lon) + ", \"lat\":" + to_string(src.lat) + "}, \"tgt\": {\"lon\":" + to_string(tgt.lon) + ", \"lat\":" + to_string(tgt.lat) + "}}}";
 
       *response << "HTTP/1.1 200 OK\r\n" << "Content-length: " << jsonResponse.length() << "\r\n\r\n" << jsonResponse;
     }
