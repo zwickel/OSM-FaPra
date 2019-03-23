@@ -6,12 +6,12 @@
 
 #### for osmpbf
 
-* protobuf
-* zlib
+- protobuf
+- zlib
 
 #### for Simple-Web-Server
 
-* Boost.Asio or standalone Asio
+- Boost.Asio or standalone Asio
 
 ### Unzip
 
@@ -32,7 +32,7 @@ $ mkdir build
 $ cd build
 $ cmake ..
 $ make
-```  
+```
 
 #### Simple-Web-Server
 
@@ -56,9 +56,9 @@ $ make
 
 ## Start
 
-```bash
+```sh
 $ cd ../bin
-$ ./main.out /path/to/germany.osm.pbf
+$ ./../bin/main.out /path/to/germany.osm.pbf
 ```
 
 After the graph has been read and the web server starts your console should output:  
