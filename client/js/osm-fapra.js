@@ -1,12 +1,12 @@
 var map = new ol.Map({
-  target: 'map',
+  target: "map",
   layers: [
     new ol.layer.Tile({
       source: new ol.source.OSM()
     })
   ],
   view: new ol.View({
-    center: ol.proj.fromLonLat([9.10660, 48.74518]),
+    center: ol.proj.fromLonLat([9.1066, 48.74518]),
     zoom: 5
   })
 });
@@ -14,9 +14,9 @@ var map = new ol.Map({
 /**
  * Elements that make up the popup.
  */
-var container = document.getElementById('popup');
-var content = document.getElementById('popup-content');
-var closer = document.getElementById('popup-closer');
+var container = document.getElementById("popup");
+var content = document.getElementById("popup-content");
+var closer = document.getElementById("popup-closer");
 
 /**
  * Create an overlay to anchor the popup to the map.
@@ -44,13 +44,14 @@ closer.onclick = function() {
   return false;
 };
 
+// marker section ##############################################################
 /**
- * create a marker
+ * create a feature for the marker
  */
 var marker = new ol.Feature({
-  type: 'geoMarker',
-  geometry: new ol.geom.Point([0,0]),
-  name: 'nearest node to click'
+  type: "geoMarker",
+  // geometry: new ol.geom.Point([0,0]),
+  name: "nearest node to click"
 });
 
 /**
@@ -58,10 +59,10 @@ var marker = new ol.Feature({
  */
 var markerStyle = new ol.style.Style({
   text: new ol.style.Text({
-    text: '\uf041',
-    font: 'normal 25px FontAwesome',
+    text: "\uf041",
+    font: "normal 25px FontAwesome",
     fill: new ol.style.Fill({
-      color: 'red'
+      color: "red"
     })
   })
 });
@@ -82,7 +83,7 @@ var markerSource = new ol.source.Vector({
  * create a layer that will contain the source with the marker
  */
 var markerLayer = new ol.layer.Vector({
-  source : markerSource
+  source: markerSource
 });
 
 /**
@@ -90,34 +91,92 @@ var markerLayer = new ol.layer.Vector({
  */
 map.addLayer(markerLayer);
 
-// var edgesLayer = new ol.layer.VectorLayer({
-//   source: vectorSource
-// });
+// edge section ################################################################
+/**
+ * feature for edge
+ */
+var edge = new ol.Feature({
+  type: "edge",
+  // geometry: new ol.geom.LineString(),
+  name: "nearest edge to click"
+});
 
-// map.addLayer(edgesLayer);
+/**
+ * style for edge on map
+ */
+var edgeStyle = new ol.style.Style({
+  stroke: new ol.style.Stroke({
+    width: 6,
+    color: "orange"
+  })
+});
 
-map.on('singleclick', function(e) {
+/**
+ * append style to edge
+ */
+edge.setStyle(edgeStyle);
+
+/**
+ * create source that will contain the edge
+ */
+var edgeSource = new ol.source.Vector({
+  features: [edge]
+});
+
+/**
+ * create a layer
+ */
+var edgesLayer = new ol.layer.Vector({
+  source: edgeSource
+});
+
+map.addLayer(edgesLayer);
+
+map.on("singleclick", function(e) {
   var coords = e.coordinate;
   var lonlat = ol.proj.toLonLat(coords);
   console.log(lonlat);
   var info;
 
   $.ajax({
-    method: 'POST',
-    url: 'http://localhost:8091/getnearestnode',
-    data: '{"lon": ' + lonlat[0] + ', "lat": ' + lonlat[1] + '}'
+    method: "POST",
+    url: "http://localhost:8091/getnearestnode",
+    data: '{"lon": ' + lonlat[0] + ', "lat": ' + lonlat[1] + "}"
   }).done(function(data, status, xhr) {
     console.log(data);
     info = JSON.parse(data);
-    $('#clicked-lat').text(lonlat[1]);
-    $('#clicked-lon').text(lonlat[0]);
-    $('#nearest-lat').text(info.coords.lat);
-    $('#nearest-lon').text(info.coords.lon);
-    $('#popup-header').text('clicked at')
+    $("#clicked-lat").text(lonlat[1]);
+    $("#clicked-lon").text(lonlat[0]);
+    $("#nearest-lat").text(info.coords.lat);
+    $("#nearest-lon").text(info.coords.lon);
+    $("#popup-header").text("clicked at");
     popupOverlay.setPosition(coords);
-    marker.setGeometry(new ol.geom.Point(ol.proj.fromLonLat([info.coords.lon, info.coords.lat])));
+    marker.setGeometry(
+      new ol.geom.Point(ol.proj.fromLonLat([info.coords.lon, info.coords.lat]))
+    );
   });
+});
 
+map.on("rightclick", function(e) {
+  var coords = e.coordinate;
+  var lonlat = ol.proj.toLonLat(coords);
+  console.log(lonlat);
+  var info;
+
+  $.ajax({
+    method: "POST",
+    url: "http://localhost:8091/getnearestedge",
+    data: '{"lon": ' + lonlat[0] + ', "lat": ' + lonlat[1] + "}"
+  }).done(function(data, status, xhr) {
+    console.log(data);
+    info = JSON.parse(data);
+    edge.setGeometry(
+      new ol.geom.LineString([
+        ol.proj.fromLonLat([info.edge.src.lon, info.edge.src.lat]),
+        ol.proj.fromLonLat([info.edge.tgt.lon, info.edge.tgt.lat])
+      ])
+    );
+  });
 });
 
 // test get ajax
