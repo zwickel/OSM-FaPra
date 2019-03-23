@@ -11,7 +11,6 @@
 #include "Graph.h"
 
 using HttpServer = SimpleWeb::Server<SimpleWeb::HTTP>;
-using HttpClient = SimpleWeb::Client<SimpleWeb::HTTP>;
 
 class WebServer {
   public:
