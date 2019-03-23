@@ -13,7 +13,7 @@ void GraphReader::parseBlock(osmpbf::PrimitiveBlockInputAdaptor & pbi, Graph * g
   roadFilter.rebuildCache();
 
   // creating map that maps the OSM node ID with the node vector index
-  graph->osmNodeIdVectorIndexMap;
+  // graph->osmNodeIdVectorIndexMap;
   long srcNodeId;
 
   if (pbi.waysSize()) {
@@ -123,10 +123,14 @@ int GraphReader::fillNodes(std::string fileName, Graph * graph) {
         // graph->nodes[nodeIndex].lat = node.latd;
         // graph->nodes[nodeIndex].lon = node.lond;
 
-        if(graph->osmNodeIdVectorIndexMap.count(node.id())>0) {
-          graph->nodes[graph->osmNodeIdVectorIndexMap.find(node.id())->second].lat = node.latd();
-          graph->nodes[graph->osmNodeIdVectorIndexMap.find(node.id())->second].lon = node.lond();
-        }
+        // if(graph->osmNodeIdVectorIndexMap.count(node.id())>0) {
+          const auto& it = graph->osmNodeIdVectorIndexMap.find(node.id());
+          if (it != graph->osmNodeIdVectorIndexMap.end()) {
+            graph->nodes[it->second].lat = node.latd();
+            graph->nodes[it->second].lon = node.lond();
+          }
+        //   graph->nodes[graph->osmNodeIdVectorIndexMap.find(node.id())->second].lon = node.lond();
+        // }
       }
     }
   }

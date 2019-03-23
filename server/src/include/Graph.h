@@ -6,13 +6,16 @@
 #include <functional>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <math.h>
+
+#include <GeographicLib/Geodesic.hpp>
 
 #include "Node.h"
 #include "Edge.h"
 
 struct Graph {
-  std::map<std::int64_t, int> osmNodeIdVectorIndexMap;
+  std::unordered_map<std::int64_t, int> osmNodeIdVectorIndexMap;
   std::vector<Node> nodes;
   std::vector<Edge> edges;
   // im offset array steht das erste Vorkommen eines Knotens im edges array
@@ -24,6 +27,7 @@ struct Graph {
   void sortEdges();
   Node getNearestNode(double lon, double lat);
   Edge getNearestEdge(double lon, double lat);
+  void calcEdgeDistance(Edge edge);
 };
 
 #endif // Graph_h
