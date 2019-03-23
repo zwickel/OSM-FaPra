@@ -1,6 +1,5 @@
 #include "WebServer.h"
 
-using namespace std;
 using namespace boost::property_tree; // for requests with .json
 
 void WebServer::start(Graph * graph) {
@@ -11,25 +10,29 @@ void WebServer::start(Graph * graph) {
   // Will respond with content in the web/-directory, and its subdirectories.
   // Default file: index.html
   // Can for instance be used to retrieve an HTML 5 client that uses REST-resources on this server
-  server.default_resource["GET"] = [](std::shared_ptr<HttpServer::Response> response, shared_ptr<HttpServer::Request> request) {
+  server.default_resource["GET"] = [](std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
     try {
-      auto web_root_path = boost::filesystem::canonical("../../client");
+      // for debugging
+      auto web_root_path = boost::filesystem::canonical("client");
+      // without debugging
+      // auto web_root_path = boost::filesystem::canonical("../../client");
+
       auto path = boost::filesystem::canonical(web_root_path / request->path);
       // Check if path is within web_root_path
-      if(distance(web_root_path.begin(), web_root_path.end()) > distance(path.begin(), path.end()) ||
-         !equal(web_root_path.begin(), web_root_path.end(), path.begin()))
-        throw invalid_argument("path must be within root path");
+      if(std::distance(web_root_path.begin(), web_root_path.end()) > std::distance(path.begin(), path.end()) ||
+         !std::equal(web_root_path.begin(), web_root_path.end(), path.begin()))
+        throw std::invalid_argument("path must be within root path");
       if(boost::filesystem::is_directory(path))
         path /= "index.html";
 
       SimpleWeb::CaseInsensitiveMultimap header;
 
-      auto ifs = make_shared<ifstream>();
-      ifs->open(path.string(), ifstream::in | ios::binary | ios::ate);
+      auto ifs = std::make_shared<std::ifstream>();
+      ifs->open(path.string(), std::ifstream::in | std::ios::binary | std::ios::ate);
 
       if(*ifs) {
         auto length = ifs->tellg();
-        ifs->seekg(0, ios::beg);
+        ifs->seekg(0, std::ios::beg);
 
         header.emplace("Content-Length", to_string(length));
         response->write(header);
@@ -37,18 +40,18 @@ void WebServer::start(Graph * graph) {
         // Trick to define a recursive function within this scope (for example purposes)
         class FileServer {
         public:
-          static void read_and_send(const shared_ptr<HttpServer::Response> &response, const shared_ptr<ifstream> &ifs) {
+          static void read_and_send(const std::shared_ptr<HttpServer::Response> &response, const std::shared_ptr<std::ifstream> &ifs) {
             // Read and send 128 KB at a time
-            static vector<char> buffer(131072); // Safe when server is running on one thread
-            streamsize read_length;
-            if((read_length = ifs->read(&buffer[0], static_cast<streamsize>(buffer.size())).gcount()) > 0) {
+            static std::vector<char> buffer(131072); // Safe when server is running on one thread
+            std::streamsize read_length;
+            if((read_length = ifs->read(&buffer[0], static_cast<std::streamsize>(buffer.size())).gcount()) > 0) {
               response->write(&buffer[0], read_length);
-              if(read_length == static_cast<streamsize>(buffer.size())) {
+              if(read_length == static_cast<std::streamsize>(buffer.size())) {
                 response->send([response, ifs](const SimpleWeb::error_code &ec) {
                   if(!ec)
                     read_and_send(response, ifs);
                   else
-                    cerr << "Connection interrupted" << endl;
+                    std::cerr << "Connection interrupted" << std::endl;
                 });
               }
             }
@@ -57,29 +60,29 @@ void WebServer::start(Graph * graph) {
         FileServer::read_and_send(response, ifs);
       }
       else
-        throw invalid_argument("could not read file");
+        throw std::invalid_argument("could not read file");
     }
-    catch(const exception &e) {
+    catch(const std::exception &e) {
       response->write(SimpleWeb::StatusCode::client_error_bad_request, "Could not open path " + request->path + ": " + e.what());
     }
   };
 
-  server.on_error = [](shared_ptr<HttpServer::Request> /*request*/, const SimpleWeb::error_code & /*ec*/) {
+  server.on_error = [](std::shared_ptr<HttpServer::Request> /*request*/, const SimpleWeb::error_code & /*ec*/) {
     // Handle errors here
     // Note that connection timeouts will also call this handle with ec set to SimpleWeb::errc::operation_canceled
   };
 
-  thread server_thread([&server]() {
+  std::thread server_thread([&server]() {
     // Start server
     server.start();
   });
 
   // Wait for server to start so that the client can connect
-  this_thread::sleep_for(chrono::seconds(1));
+  std::this_thread::sleep_for(std::chrono::seconds(1));
   
   // GET-example for the path /match/[number], responds with the matched string in path (number)
   // For instance a request GET /match/123 will receive: 123
-  server.resource["^/match/([0-9]+)$"]["GET"] = [](shared_ptr<HttpServer::Response> response, shared_ptr<HttpServer::Request> request) {
+  server.resource["^/match/([0-9]+)$"]["GET"] = [](std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
     response->write(request->path_match[1]);
   };
 
@@ -88,7 +91,7 @@ void WebServer::start(Graph * graph) {
    * input coords (lon, lat) where the user clicked
    * return sends back the coords of the nearest node to the coords from input
    */  
-  server.resource["^/getnearestnode$"]["POST"] = [&](shared_ptr<HttpServer::Response> response, shared_ptr<HttpServer::Request> request) {
+  server.resource["^/getnearestnode$"]["POST"] = [&](std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
     
     try
     {
@@ -100,7 +103,7 @@ void WebServer::start(Graph * graph) {
 
       Node nearestNode = graph->getNearestNode(lon, lat);
 
-      string jsonResponse = "{\"coords\": {\"lon\":" + to_string(nearestNode.lon) + ", \"lat\":" + to_string(nearestNode.lat) + "}}";
+      std::string jsonResponse = "{\"coords\": {\"lon\":" + std::to_string(nearestNode.lon) + ", \"lat\":" + std::to_string(nearestNode.lat) + "}}";
 
       *response << "HTTP/1.1 200 OK\r\n" << "Content-length: " << jsonResponse.length() << "\r\n\r\n" << jsonResponse;
     }
@@ -116,7 +119,7 @@ void WebServer::start(Graph * graph) {
    * input coords (lon, lat) where the user clicked
    * return nearest edge (src, tgt) to the coords from input
    */
-  server.resource["^/getnearestedge$"]["POST"] = [&](shared_ptr<HttpServer::Response> response, shared_ptr<HttpServer::Request> request) {
+  server.resource["^/getnearestedge$"]["POST"] = [&](std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
     
     try
     {
@@ -130,7 +133,7 @@ void WebServer::start(Graph * graph) {
       Node src = graph->nodes[nearestEdge.srcNodeId];
       Node tgt = graph->nodes[nearestEdge.tgtNodeId];
 
-      string jsonResponse = "{\"edge\":{\"src\":{\"lon\":" + to_string(src.lon) + ", \"lat\":" + to_string(src.lat) + "}, \"tgt\": {\"lon\":" + to_string(tgt.lon) + ", \"lat\":" + to_string(tgt.lat) + "}}}";
+      std::string jsonResponse = "{\"edge\":{\"src\":{\"lon\":" + std::to_string(src.lon) + ", \"lat\":" + std::to_string(src.lat) + "}, \"tgt\": {\"lon\":" + std::to_string(tgt.lon) + ", \"lat\":" + std::to_string(tgt.lat) + "}}}";
 
       *response << "HTTP/1.1 200 OK\r\n" << "Content-length: " << jsonResponse.length() << "\r\n\r\n" << jsonResponse;
     }
