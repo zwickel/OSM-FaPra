@@ -6,6 +6,7 @@
 struct Edge {
   int srcNodeId; // a local ID in graph.nodes vector
   int tgtNodeId; // a local ID in graph.nodes vector
+  double distance;
   // std::map<std::string> tags;
   std::string highwayTag; // value of the according highway tag
   // int costs; // costs according to the length of the edge (distance between source and target node)
