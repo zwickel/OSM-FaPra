@@ -80,6 +80,6 @@ Edge Graph::getNearestEdge(double lon, double lat) {
  * calculates the distance of an edge
  * and writes it to its distance member variable
  */
-void calcEdgeDistance(Edge edge) {
-  GeographicLib::Geodesic::WGS84().Inverse(nodes[edge.srcNodeId].lat, nodes[edge.srcNodeId].lon, nodes[edge.tgtNodeId].lat, nodes[edge.tgtNodeId].lon, edge.distance);
-}
+// void calcEdgeDistance(Graph graph, Edge edge) {
+//   GeographicLib::Geodesic::WGS84().Inverse(graph.nodes[edge.srcNodeId].lat, graph.nodes[edge.srcNodeId].lon, graph.nodes[edge.tgtNodeId].lat, graph.nodes[edge.tgtNodeId].lon, edge.distance);
+// }

@@ -47,7 +47,7 @@ $ cmake ..
 $ make
 ```
 
-#### GeographicLib
+#### GeographicLib (not needed at the moment - also not used in makefile)
 
 download GeographicLib from <http://geographiclib.sourceforge.net> and unzip in to the lib-folder  
 currently version 1.49 is used so
@@ -65,7 +65,9 @@ $ make
 ### Building the actual project
 
 ```sh
-$ cd ../../../src
+$ cd ../../../
+$ mkdir bin
+$ cd src
 $ make
 ```
 

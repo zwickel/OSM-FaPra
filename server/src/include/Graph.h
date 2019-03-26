@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <math.h>
 
-#include <GeographicLib/Geodesic.hpp>
+// #include <GeographicLib/Geodesic.hpp>
 
 #include "Node.h"
 #include "Edge.h"
@@ -27,7 +27,7 @@ struct Graph {
   void sortEdges();
   Node getNearestNode(double lon, double lat);
   Edge getNearestEdge(double lon, double lat);
-  void calcEdgeDistance(Edge edge);
+  // void calcEdgeDistance(Graph graph, Edge edge);
 };
 
 #endif // Graph_h
