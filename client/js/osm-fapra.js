@@ -11,6 +11,7 @@ var map = new ol.Map({
   })
 });
 
+// popup ##############################################################
 /**
  * Elements that make up the popup.
  */
@@ -46,16 +47,7 @@ closer.onclick = function() {
 
 // marker section ##############################################################
 /**
- * create a feature for the marker
- */
-var marker = new ol.Feature({
-  type: "geoMarker",
-  // geometry: new ol.geom.Point([0,0]),
-  name: "nearest node to click"
-});
-
-/**
- * style for marker on map
+ * style for markers on map
  */
 var markerStyle = new ol.style.Style({
   text: new ol.style.Text({
@@ -68,19 +60,15 @@ var markerStyle = new ol.style.Style({
 });
 
 /**
- * append style to marker
- */
-marker.setStyle(markerStyle);
-
-/**
- * create a source that will contain marker
+ * create a source that will contain markers
  */
 var markerSource = new ol.source.Vector({
-  features: [marker]
+  features: []
+  // features: [marker]
 });
 
 /**
- * create a layer that will contain the source with the marker
+ * create a layer that will contain the source with the markers
  */
 var markerLayer = new ol.layer.Vector({
   source: markerSource
@@ -95,11 +83,11 @@ map.addLayer(markerLayer);
 /**
  * feature for edge
  */
-var edge = new ol.Feature({
-  type: "edge",
-  // geometry: new ol.geom.LineString(),
-  name: "nearest edge to click"
-});
+// var edge = new ol.Feature({
+//   type: "edge",
+//   // geometry: new ol.geom.LineString(),
+//   name: "nearest edge to click"
+// });
 
 /**
  * style for edge on map
@@ -114,13 +102,13 @@ var edgeStyle = new ol.style.Style({
 /**
  * append style to edge
  */
-edge.setStyle(edgeStyle);
+// edge.setStyle(edgeStyle);
 
 /**
  * create source that will contain the edge
  */
 var edgeSource = new ol.source.Vector({
-  features: [edge]
+  // features: [edge]
 });
 
 /**
@@ -132,58 +120,184 @@ var edgesLayer = new ol.layer.Vector({
 
 map.addLayer(edgesLayer);
 
-map.on("singleclick", function(e) {
-  var coords = e.coordinate;
-  var lonlat = ol.proj.toLonLat(coords);
-  console.log(lonlat);
+/**
+ * function to get nearest node to coordinates[]-array
+ * @return an object with an object 'coords' with two objects ('lon', 'lat)
+ */
+function getNearestNode(lonlat) {
   var info;
 
   $.ajax({
     method: "POST",
+    async: false,
     url: "http://localhost:8091/getnearestnode",
     data: '{"lon": ' + lonlat[0] + ', "lat": ' + lonlat[1] + "}"
   }).done(function(data, status, xhr) {
-    console.log(data);
+    console.log("nearestNode response: " + data);
     info = JSON.parse(data);
-    $("#clicked-lat").text(lonlat[1]);
-    $("#clicked-lon").text(lonlat[0]);
-    $("#nearest-lat").text(info.coords.lat);
-    $("#nearest-lon").text(info.coords.lon);
-    $("#popup-header").text("clicked at");
-    popupOverlay.setPosition(coords);
-    marker.setGeometry(
-      new ol.geom.Point(ol.proj.fromLonLat([info.coords.lon, info.coords.lat]))
-    );
   });
+
+  return info;
+}
+
+map.on("singleclick", function(e) {
+  var coords = e.coordinate;
+  // console.log("coords: " + coords);
+  var lonlat = ol.proj.toLonLat(coords);
+  // console.log(lonlat);
+  var info = getNearestNode(lonlat);
+
+  $("#clicked-lat").text(lonlat[1]);
+  $("#clicked-lon").text(lonlat[0]);
+  $("#nearest-lat").text(info.coords.lat);
+  $("#nearest-lon").text(info.coords.lon);
+  $("#popup-header").text("clicked at");
+  popupOverlay.setPosition(coords);
+
+  markerLonLat = [info.coords.lon, info.coords.lat];
+
+  var marker = new ol.Feature({
+    type: "geoMarker",
+    geometry: new ol.geom.Point(ol.proj.fromLonLat(markerLonLat)),
+    name: "marker" + markerSource.getFeatures().length
+  });
+  marker.setStyle(markerStyle);
+  console.log("features: " + markerSource.getFeatures().length);
+  markerSource.addFeature(marker);
+
+  fillMarkerTable(markerLonLat, info.id);
 });
 
-map.on("rightclick", function(e) {
-  var coords = e.coordinate;
-  var lonlat = ol.proj.toLonLat(coords);
-  console.log(lonlat);
-  var info;
+var positions = [];
 
+// function fills the position-table and the position-array
+function fillMarkerTable(lonlatArr, nodeId) {
+  // add to Positions-tab
+  $("#position-popup-content").html(function() {
+    return (
+      $("#position-popup-content").html() +
+      '<table id="position' +
+      positions.length +
+      '" class="position-table"><tr><th colspan="2">Position ' +
+      positions.length +
+      "</th></tr><tr><td>lat</td><td>" +
+      lonlatArr[1] +
+      "</td></tr><tr><td>lon</td><td>" +
+      lonlatArr[0] +
+      "</td></tr><tr><td colspan='2'><button type='button' onclick='removePosition(" +
+      positions.length +
+      ");' style='width:100%;'>Remove Position</button></td></tr>"
+    );
+  });
+
+  // add to positions-array
+  positions.push({
+    id: nodeId,
+    lon: lonlatArr[0],
+    lat: lonlatArr[1],
+    weight: 1
+  });
+  console.log(positions);
+
+  // show Positions-tab
+  if ($("#position-popup").css("display") == "none") {
+    $("#position-popup").show();
+  }
+}
+
+function removePosition(id) {
+  // delete according feature (marker)
+  var featureToRemove = markerSource.getClosestFeatureToCoordinate(
+    ol.proj.fromLonLat([positions[id].lon, positions[id].lat])
+  );
+  console.log(featureToRemove);
+  markerSource.removeFeature(featureToRemove);
+
+  // delete from positions-array
+  positions.splice(id, 1);
+  $("#position" + id).remove();
+
+  // update positions-table
+  for (var i = id; i < positions.length; i++) {
+    var j = i + 1;
+    $("#position" + j + " th").html("Position " + i);
+    $("#position" + j + " button").attr(
+      "onclick",
+      "removePositionn(" + i + ");"
+    );
+    $("#position" + j).attr("id", "positionn" + i);
+  }
+}
+
+function deletePositions() {
+  markerSource.clear();
+  popupOverlay.setPosition(undefined);
+  $("#position-popup").hide();
+  positions = [];
+  $("#position-popup-content").html("");
+}
+
+function getCenter() {
+  // calculate center of positions
+  var lat = 0;
+  var lon = 0;
+  var totWeight = 0;
+  positions.forEach(element => {
+    lat += element.lat * element.weight;
+    lon += element.lon * element.weight;
+    totWeight += element.weight;
+  });
+  lat = lat / totWeight;
+  lon = lon / totWeight;
+  center = [lon, lat];
+
+  // get nearest node to center
+  var nearestNodeToCenter = getNearestNode(center);
+
+  // if (nearestNodeToCenter.id != -1)
+
+  // build new marker and place on map
+  var marker = new ol.Feature({
+    type: "geoMarker",
+    geometry: new ol.geom.Point(
+      ol.proj.fromLonLat([
+        nearestNodeToCenter.coords.lon,
+        nearestNodeToCenter.coords.lat
+      ])
+    ),
+    name: "center"
+  });
+  marker.setStyle(
+    new ol.style.Style({
+      text: new ol.style.Text({
+        text: "\uf041",
+        font: "normal 35px FontAwesome",
+        stroke: new ol.style.Stroke({
+          color: "black"
+        }),
+        fill: new ol.style.Fill({
+          color: "#0ff207"
+        })
+      })
+    })
+  );
+  markerSource.addFeature(marker);
+
+  // build data for dijkstra
+  var data = '{"centerId": ' + nearestNodeToCenter.id;
+  for (i in positions) {
+    data += ', "id' + i + '": ' + positions[i].id;
+  }
+  data += "}";
+
+  var paths;
+  // ajax call to calculate directions (dijkstra)
   $.ajax({
     method: "POST",
-    url: "http://localhost:8091/getnearestedge",
-    data: '{"lon": ' + lonlat[0] + ', "lat": ' + lonlat[1] + "}"
-  }).done(function(data, status, xhr) {
-    console.log(data);
-    info = JSON.parse(data);
-    edge.setGeometry(
-      new ol.geom.LineString([
-        ol.proj.fromLonLat([info.edge.src.lon, info.edge.src.lat]),
-        ol.proj.fromLonLat([info.edge.tgt.lon, info.edge.tgt.lat])
-      ])
-    );
+    url: "http://localhost:8091/getpaths",
+    data: data
+  }).done(function(res, status, xhr) {
+    console.log(res);
+    paths = JSON.parse(res);
   });
-});
-
-// test get ajax
-// $.ajax({
-//   url: 'http://localhost:8091/match/8'
-// }).done(function(data, status, xhr) {
-//   // alert('ajax done');
-//   alert(data);
-//   // $( this ).addClass( "done" );
-// });
+}
