@@ -80,14 +80,6 @@ var markerLayer = new ol.layer.Vector({
 map.addLayer(markerLayer);
 
 // edge section ################################################################
-/**
- * feature for edge
- */
-// var edge = new ol.Feature({
-//   type: "edge",
-//   // geometry: new ol.geom.LineString(),
-//   name: "nearest edge to click"
-// });
 
 /**
  * style for edge on map
@@ -98,11 +90,6 @@ var edgeStyle = new ol.style.Style({
     color: "orange"
   })
 });
-
-/**
- * append style to edge
- */
-// edge.setStyle(edgeStyle);
 
 /**
  * create source that will contain the edge
@@ -210,7 +197,7 @@ function removePosition(id) {
   var featureToRemove = markerSource.getClosestFeatureToCoordinate(
     ol.proj.fromLonLat([positions[id].lon, positions[id].lat])
   );
-  console.log(featureToRemove);
+
   markerSource.removeFeature(featureToRemove);
 
   // delete from positions-array
@@ -290,7 +277,6 @@ function getCenter() {
   }
   data += "}";
 
-  var paths;
   // ajax call to calculate directions (dijkstra)
   $.ajax({
     method: "POST",
@@ -299,5 +285,25 @@ function getCenter() {
   }).done(function(res, status, xhr) {
     console.log(res);
     paths = JSON.parse(res);
+
+    for (var path in paths) {
+      var line = [];
+      for (var segment in paths[path]) {
+        console.log("in segment");
+        line.push(
+          ol.proj.fromLonLat([
+            paths[path][segment].lon,
+            paths[path][segment].lat
+          ])
+        );
+      }
+      var edge = new ol.Feature({
+        type: "edge",
+        geometry: new ol.geom.LineString(line),
+        name: "path"
+      });
+      edge.setStyle(edgeStyle);
+      edgeSource.addFeature(edge);
+    }
   });
 }
