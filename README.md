@@ -65,7 +65,7 @@ $ make
 ### Building the actual project
 
 ```sh
-$ cd ../../../
+$ cd ../../../ # navigate back to server-folder
 $ mkdir bin
 $ cd src
 $ make

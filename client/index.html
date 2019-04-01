@@ -18,6 +18,22 @@
 <body>
 
   <div id="map" class="map"></div>
+
+  <div id="position-popup" class="ol-popup" style="display:none;">
+    <div id="position-popup-header">Positions
+      <button type="button" class="close" onclick="deletePositions();">
+        <span id="position-popup-closer" class="ol-popup-closer"></span>
+      </button>
+    </div>
+    <div id="position-popup-content" class="ol-popup-content"></div>
+    <div id="position-popup-footer" class="ol-popup-footer btn" onclick="getCenter();">
+      Show Center
+      <!-- <button type="button" class="close" onclick="">
+        <span id="position-popup-button" class="popup-button"></span> -->
+      </button>
+    </div>
+  </div>
+
   <div id="popup" class="ol-popup">
     <div id="popup-header"></div>
     <div id="popup-content" class="ol-popup-content">
