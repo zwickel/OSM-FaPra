@@ -11,6 +11,7 @@
 #include <osmpbf/iway.h>
 #include <osmpbf/irelation.h>
 #include <osmpbf/filter.h>
+#include <fstream>
 
 void readMapData(std::string fileName, Graph * graph) {
   
@@ -45,6 +46,7 @@ void readMapData(std::string fileName, Graph * graph) {
     if (!edgeTypeCounter.insert(std::pair<std::string, int>(it->highwayTag, 1)).second) {
       edgeTypeCounter.find(it->highwayTag)->second++;
     }
+    // graph->calcEdgeDistance(it);
   }
 
   // table output
@@ -65,7 +67,24 @@ int main(int argc, char *argv[]) {
     fileName = argv[1];
     Graph graph;
 
+    // reading osmpbf
     readMapData(fileName, &graph);
+
+    // calculate distances for each edge in graph
+    for (std::vector<Edge>::iterator it = graph.edges.begin(); it != graph.edges.end(); it++) {
+      it->distance = graph.calcDistance(graph.nodes[it->srcNodeId].lat, graph.nodes[it->srcNodeId].lon, graph.nodes[it->tgtNodeId].lat, graph.nodes[it->tgtNodeId].lon);
+      it->calcCost();
+    }
+    std::cout << std::endl << "--> distances calculated" << std::endl;  // output
+
+    // std::ofstream outputfile;
+    // outputfile.open("outputfile.txt");
+    // for (auto edge : graph.edges) {
+    //   outputfile << "edge-distance: " << edge.getDistance() << std::endl;
+    // }
+    // outputfile.close();
+
+    // webserver
     WebServer ws;
     std::cout << std::endl << "starting server at http://localhost:8091" << std::endl;
     ws.start(&graph);

@@ -55,14 +55,22 @@ void GraphReader::parseBlock(osmpbf::PrimitiveBlockInputAdaptor & pbi, Graph * g
               // std::cout << graph->nodesCounter << std::endl; // output
             }
 
-            // push edgess
-            graph->edges.push_back(Edge(graph->osmNodeIdVectorIndexMap.find(srcNodeId)->second, graph->osmNodeIdVectorIndexMap.find(*refIter)->second, highwayValue));
-            graph->edgesCounter++;
+            // create new edge to add
+            Edge newEdge = Edge(graph->osmNodeIdVectorIndexMap.find(srcNodeId)->second, graph->osmNodeIdVectorIndexMap.find(*refIter)->second, highwayValue);
 
-            if(!oneWayFilter.matches(way)) {
-              graph->edges.push_back(Edge(graph->osmNodeIdVectorIndexMap.find(*refIter)->second, graph->osmNodeIdVectorIndexMap.find(srcNodeId)->second, highwayValue));
+            // check if edge is already in edges else add it
+            // if (std::find(graph->edges.begin(), graph->edges.end(), newEdge) == graph->edges.end()) {
+              
+              // push edge to edgess
+              graph->edges.push_back(newEdge);
               graph->edgesCounter++;
-            }
+
+              // check if edge is one-way else add backward edge
+              if(!oneWayFilter.matches(way)) {
+                graph->edges.push_back(Edge(graph->osmNodeIdVectorIndexMap.find(*refIter)->second, graph->osmNodeIdVectorIndexMap.find(srcNodeId)->second, highwayValue));
+                graph->edgesCounter++;
+              }
+            // }
 
             // std::cout << graph->edgesCounter << std::endl; // output
 
@@ -77,7 +85,6 @@ void GraphReader::parseBlock(osmpbf::PrimitiveBlockInputAdaptor & pbi, Graph * g
 int GraphReader::readEdges(std::string fileName, Graph * graph) {
   osmpbf::OSMFileIn inFile(fileName);
   if (!inFile.open()) {
-    // std::cerr << "Could not open file " << fileName << std::endl;
     return -1;
   }
 
@@ -93,8 +100,8 @@ int GraphReader::readEdges(std::string fileName, Graph * graph) {
   return 0;
 }
 
+// writes lat and lon values to nodes
 int GraphReader::fillNodes(std::string fileName, Graph * graph) {
-  // std::cout << "in fillNodes ;)" << std::endl; // output
   osmpbf::OSMFileIn inFile(fileName);
   if (!inFile.open()) {
     return -1;

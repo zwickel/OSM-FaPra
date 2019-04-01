@@ -2,17 +2,24 @@
 #define Edge_h
 
 #include <iostream>
+// #include <math.h>
+// #include "Graph.h"
 
 struct Edge {
   int srcNodeId; // a local ID in graph.nodes vector
   int tgtNodeId; // a local ID in graph.nodes vector
   double distance;
+  double cost;
   // std::map<std::string> tags;
   std::string highwayTag; // value of the according highway tag
-  // int costs; // costs according to the length of the edge (distance between source and target node)
+
+  // friend bool operator== (const Edge &e1, const Edge &e2);
 
   Edge(int _srcNodeId, int _tgtNodeId);
   Edge(int _srcNodeId, int _tgtNodeId, std::string _highwayTag);
+  double getDistance();
+  void setDistance(double _distance);
+  void calcCost();
 };
 
 #endif // Edge_h
