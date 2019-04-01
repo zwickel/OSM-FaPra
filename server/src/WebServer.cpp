@@ -13,9 +13,9 @@ void WebServer::start(Graph * graph) {
   server.default_resource["GET"] = [](std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
     try {
       // for debugging
-      auto web_root_path = boost::filesystem::canonical("client");
+      // auto web_root_path = boost::filesystem::canonical("client");
       // without debugging
-      // auto web_root_path = boost::filesystem::canonical("../../client");
+      auto web_root_path = boost::filesystem::canonical("../../client");
 
       auto path = boost::filesystem::canonical(web_root_path / request->path);
       // Check if path is within web_root_path
@@ -102,8 +102,10 @@ void WebServer::start(Graph * graph) {
       double lat = pt.get<double>("lat");
 
       Node nearestNode = graph->getNearestNode(lon, lat);
+      std::cout << "nearestNode.id: " << nearestNode.id << std::endl;
+      long nodeId = graph->getNodePosition(nearestNode);
 
-      std::string jsonResponse = "{\"coords\": {\"lon\":" + std::to_string(nearestNode.lon) + ", \"lat\":" + std::to_string(nearestNode.lat) + "}}";
+      std::string jsonResponse = "{\"coords\": {\"lon\":" + std::to_string(nearestNode.lon) + ", \"lat\":" + std::to_string(nearestNode.lat) + "}, \"id\":" + std::to_string(nodeId) + "}";
 
       *response << "HTTP/1.1 200 OK\r\n" << "Content-length: " << jsonResponse.length() << "\r\n\r\n" << jsonResponse;
     }
@@ -116,34 +118,96 @@ void WebServer::start(Graph * graph) {
 
   /**
    * POST-request
-   * input coords (lon, lat) where the user clicked
-   * return nearest edge (src, tgt) to the coords from input
+   *
    */
-  server.resource["^/getnearestedge$"]["POST"] = [&](std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
-    
-    try
-    {
+  server.resource["^/getpaths$"]["POST"] = [&] (std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
+
+    try {
       ptree pt;
       read_json(request->content, pt);
 
-      double lon = pt.get<double>("lon");
-      double lat = pt.get<double>("lat");
+      // get vars from ptree;
+      int center = pt.get<int>("centerId");
+      std::cout << "center:" << center << std::endl;
+      bool first = true;
+      std::vector<int> ids;
 
-      Edge nearestEdge = graph->getNearestEdge(lon, lat);
-      Node src = graph->nodes[nearestEdge.srcNodeId];
-      Node tgt = graph->nodes[nearestEdge.tgtNodeId];
+      for (ptree::const_iterator it = pt.begin(); it != pt.end(); ++it) {
+        if (first) {
+          first = false;
+          continue;
+        }
+        std::cout << it->first << ", " << pt.get<int>(it->first) << std::endl;  // output
+        ids.push_back(pt.get<int>(it->first));
+      }
+      
 
-      std::string jsonResponse = "{\"edge\":{\"src\":{\"lon\":" + std::to_string(src.lon) + ", \"lat\":" + std::to_string(src.lat) + "}, \"tgt\": {\"lon\":" + std::to_string(tgt.lon) + ", \"lat\":" + std::to_string(tgt.lat) + "}}}";
+      // call function
+      DijkstraStructure dijkstraStruct;
+      graph->dijkstraCalcPaths(dijkstraStruct, center);
+
+      std::vector<std::vector<int>> results;
+
+      for (int i = 0;  i < ids.size(); i++) {
+        std::cout << ids[i] << std::endl;
+        results.push_back(graph->dijkstraPath(ids[i], center, dijkstraStruct));
+      }
+
+      std::string jsonResponse = "{";
+
+      for (int i = 0; i < results.size(); i++) {
+        jsonResponse += "\"" + std::to_string(i) + "\":[";
+        for (int j = 0; j < results[i].size(); j++) {
+          jsonResponse += "{\"lat\": " + std::to_string(graph->nodes[results[i][j]].lat) + ", \"lon\": " + std::to_string(graph->nodes[results[i][j]].lon) + "},";
+          if (j == results[i].size() - 1) {
+          jsonResponse.pop_back();
+        }
+        }
+        jsonResponse += "],";
+        if (i == results.size() - 1) {
+          jsonResponse.pop_back();
+        }
+      }
+
+      jsonResponse += "}";
 
       *response << "HTTP/1.1 200 OK\r\n" << "Content-length: " << jsonResponse.length() << "\r\n\r\n" << jsonResponse;
-    }
-    catch(const std::exception& e)
-    {
+    } catch (const std::exception &e) {
       std::cerr << e.what() << '\n';
       *response << "HTTP/1.1 400 Bad Request\r\nContent-Length: " << strlen(e.what()) << "\r\n\r\n" << e.what();
     }
-    
   };
+
+  /**
+   * POST-request
+   * input coords (lon, lat) where the user clicked
+   * return nearest edge (src, tgt) to the coords from input
+   */
+  // server.resource["^/getnearestedge$"]["POST"] = [&](std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
+    
+  //   try
+  //   {
+  //     ptree pt;
+  //     read_json(request->content, pt);
+
+  //     double lon = pt.get<double>("lon");
+  //     double lat = pt.get<double>("lat");
+
+  //     Edge nearestEdge = graph->getNearestEdge(lon, lat);
+  //     Node src = graph->nodes[nearestEdge.srcNodeId];
+  //     Node tgt = graph->nodes[nearestEdge.tgtNodeId];
+
+  //     std::string jsonResponse = "{\"edge\":{\"src\":{\"lon\":" + std::to_string(src.lon) + ", \"lat\":" + std::to_string(src.lat) + "}, \"tgt\": {\"lon\":" + std::to_string(tgt.lon) + ", \"lat\":" + std::to_string(tgt.lat) + "}}}";
+
+  //     *response << "HTTP/1.1 200 OK\r\n" << "Content-length: " << jsonResponse.length() << "\r\n\r\n" << jsonResponse;
+  //   }
+  //   catch(const std::exception& e)
+  //   {
+  //     std::cerr << e.what() << '\n';
+  //     *response << "HTTP/1.1 400 Bad Request\r\nContent-Length: " << strlen(e.what()) << "\r\n\r\n" << e.what();
+  //   }
+    
+  // };
 
   // GET-request to get info of nearest tag
   // server.resource["^/getnearesttaginfo/[0-9]+([\\.\\,][0-9])?/[0-9]+([\\.\\,][0-9])?$"]["GET"] = [](shared_ptr<HttpServer::Response> response, shared_ptr<HttpServer::Request> request) {
