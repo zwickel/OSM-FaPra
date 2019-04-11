@@ -36,6 +36,3 @@ server/lib/*
 
 # visual studio config files
 .vscode/*
-
-# vue-ui
-vue-client
