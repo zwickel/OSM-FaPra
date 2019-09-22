@@ -15,7 +15,7 @@ void WebServer::start(Graph * graph) {
       // for debugging
       // auto web_root_path = boost::filesystem::canonical("client");
       // without debugging
-      auto web_root_path = boost::filesystem::canonical("../../client");
+      auto web_root_path = boost::filesystem::canonical("../../vue-client/dist");
 
       auto path = boost::filesystem::canonical(web_root_path / request->path);
       // Check if path is within web_root_path
@@ -127,33 +127,88 @@ void WebServer::start(Graph * graph) {
       read_json(request->content, pt);
 
       // get vars from ptree;
-      int center = pt.get<int>("centerId");
-      std::cout << "center:" << center << std::endl;
-      bool first = true;
+      // int center = pt.get<int>("centerId");
+      // std::cout << "center:" << center << std::endl;
+
+      // bool first = true;
       std::vector<int> ids;
 
       for (ptree::const_iterator it = pt.begin(); it != pt.end(); ++it) {
-        if (first) {
-          first = false;
-          continue;
-        }
+        // if (first) {
+        //   first = false;
+        //   continue;
+        // }
         std::cout << it->first << ", " << pt.get<int>(it->first) << std::endl;  // output
         ids.push_back(pt.get<int>(it->first));
       }
       
 
-      // call function
-      DijkstraStructure dijkstraStruct;
-      graph->dijkstraCalcPaths(dijkstraStruct, center);
+      // // call dijkstra on calculated center
+      // DijkstraStructure dijkstraStruct;
+      // graph->dijkstraCalcPaths(dijkstraStruct, center);
 
       std::vector<std::vector<int>> results;
+      std::vector<DijkstraStructure> dijkstraStructs;
+      // call dijkstra for every position
+      for (int i = 0; i < ids.size(); i++) {
+        std::cout << std::endl << "in loop " << i + 1 << " from " << ids.size() << std::endl;
+        DijkstraStructure dijkstraStruct;
+        dijkstraStructs.push_back(dijkstraStruct);
+        graph->dijkstraCalcPaths(dijkstraStructs[i], ids[i], ids);
+      }
 
+      std::cout << "looking for best costs" << std::endl;
+      double bestCost = std::numeric_limits<double>::max();
+      long bestNodeId = 0;
+
+      for (int i = 0; i < dijkstraStructs[0].vertices.size(); i++) {
+        int nid = dijkstraStructs[0].vertices[i].nodeId;
+        std::vector<double> costs;
+        costs.push_back(dijkstraStructs[0].vertices[i].cost);
+
+        for (int j = 1; j < dijkstraStructs.size(); j++) {
+          // std::cout << "do for other dijkstra structs" << std::endl;
+          if (j > costs.size()) {
+            break;
+          }
+          // for (int k = 0; k < dijkstraStructs[j].vertices.size(); k++) {
+            // if (dijkstraStructs[j].vertices[nid].nodeId == nid) {
+            if (dijkstraStructs[j].vertices[nid].visited) {
+              costs.push_back(dijkstraStructs[j].vertices[nid].cost);
+
+              if (costs.size() == dijkstraStructs.size()) {
+                // std::cout << "found node used by every dijkstra" << std::endl; // output
+                double currentCost = 0.0;
+                double intermediateResult = 0.0;
+                for (int x = 0; x < costs.size(); x++) {
+                  for (int y = x; y < costs.size(); y++) {
+                    intermediateResult = fabs(costs[x] - costs[y]);
+                    currentCost = currentCost + intermediateResult;
+                    }
+                  }
+                  if (currentCost < bestCost) {
+                    bestCost = currentCost;
+                    bestNodeId = nid;
+                    // std::cout << "new best cost: " << bestCost << std::endl;  // output
+                }
+              }
+              continue;
+            }
+          // }
+        }
+      }
+      
+      std::cout << "ids: " << ids.size() << std::endl;
       for (int i = 0;  i < ids.size(); i++) {
-        std::cout << ids[i] << std::endl;
-        results.push_back(graph->dijkstraPath(ids[i], center, dijkstraStruct));
+        std::cout << "getting path " << ids[i] << " to " << bestNodeId << std::endl;
+        results.push_back(graph->dijkstraPath(bestNodeId/*center*/, ids[i], dijkstraStructs[i]));
       }
 
       std::string jsonResponse = "{";
+
+      jsonResponse += "\"center\": {";
+      jsonResponse += "\"coords\": {\"lon\":" + std::to_string(graph->nodes[bestNodeId].lon) + ", \"lat\":" + std::to_string(graph->nodes[bestNodeId].lat) + "}, \"id\":" + std::to_string(bestNodeId) + "},";
+      jsonResponse += "\"paths\": {";
 
       for (int i = 0; i < results.size(); i++) {
         jsonResponse += "\"" + std::to_string(i) + "\":[";
@@ -169,7 +224,7 @@ void WebServer::start(Graph * graph) {
         }
       }
 
-      jsonResponse += "}";
+      jsonResponse += "}}";
 
       *response << "HTTP/1.1 200 OK\r\n" << "Content-length: " << jsonResponse.length() << "\r\n\r\n" << jsonResponse;
     } catch (const std::exception &e) {
