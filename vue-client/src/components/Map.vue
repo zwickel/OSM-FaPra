@@ -205,7 +205,6 @@ export default {
       newPos.featureId = featureId;
       if (startGoal == "goal") {
         this.goalPosition = newPos;
-        // this.getPathsFromDijkstra();
       } else {
         newPos.weight = 1;
         this.startPositions.push(newPos);
@@ -213,7 +212,7 @@ export default {
     },
 
     /**
-     * remove a position from startPositions and the according marker on the map
+     * Remove a position from startPositions and the according marker on the map.
      */
     onRemovePos(posIndex) {
       var featureId = this.startPositions[posIndex].featureId;
@@ -223,37 +222,51 @@ export default {
       this.startPositions.splice(posIndex, 1);
     },
 
+    // /**
+    //  * Get the coordinates of the center of the current startPositions.
+    //  * Get the nearest node according to the coordinates and save it to goalPositions (done by getNearestNode()).
+    //  */
+    // onGetCenter() {
+    //   // make button display loading
+    //   this.gettingCenter = true;
+
+    //   // calculate center position with coordinates
+    //   var lat = 0;
+    //   var lon = 0;
+    //   var totWeight = 0;
+    //   this.startPositions.forEach(element => {
+    //     lat += element.coords.lat * element.weight;
+    //     lon += element.coords.lon * element.weight;
+    //     totWeight += element.weight;
+    //   });
+    //   lat = lat / totWeight;
+    //   lon = lon / totWeight;
+    //   var center = [lon, lat];
+
+    //   // find nearest node to the calculated center
+    //   this.getNearestNode(center, "goal");
+    // },
+
     /**
-     * Get the coordinates of the center of the current startPositions.
-     * Get the nearest node according to the coordinates and save it to goalPositions (done by getNearestNode()).
-     */
-    onGetCenter() {
-      // make button display loading
-      this.gettingCenter = true;
-
-      // calculate center position with coordinates
-      var lat = 0;
-      var lon = 0;
-      var totWeight = 0;
-      this.startPositions.forEach(element => {
-        lat += element.coords.lat * element.weight;
-        lon += element.coords.lon * element.weight;
-        totWeight += element.weight;
-      });
-      lat = lat / totWeight;
-      lon = lon / totWeight;
-      var center = [lon, lat];
-
-      // find nearest node to the calculated center
-      this.getNearestNode(center, "goal");
-    },
-
-    /**
-     * build data (JSON) to call dijkstra and call dijkstra
+     * Build data (JSON) to call dijkstra and call dijkstra.
      */
     getPathsFromDijkstra() {
+      if (this.startPositions.length < 2) {
+        alert(
+          "To meet alone find a mirror, I can't help you! Add more starting positions."
+        );
+        return;
+      }
+      // remove old parts on map
+      this.edgeSource.clear();
+      if (this.goalPosition != null) {
+        this.markerSource.removeFeature(
+          this.markerSource.getFeatureById(this.goalPosition.featureId)
+        );
+        this.goalPosition = null;
+      }
+
       // build data for dijkstra
-      // var data = '{"centerId": ' + this.goalPosition.id;
       var data = "{";
       for (var i in this.startPositions) {
         data += '"id' + i + '": ' + this.startPositions[i].id + ", ";
@@ -287,7 +300,7 @@ export default {
 
     /**
      * Show the routes on the map.
-     * Therefore, make new edges and add them to the edge-layer
+     * Therefore, make new edges and add them to the edge-layer.
      */
     showPaths(paths) {
       for (var path in paths) {
@@ -311,7 +324,7 @@ export default {
     },
 
     /**
-     * Func to clear all elements on all layers
+     * Func to clear all elements on all layers.
      */
     onClearMap() {
       this.startPositions = [];
