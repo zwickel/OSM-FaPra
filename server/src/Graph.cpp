@@ -1,4 +1,5 @@
 #include "Graph.h"
+#include <chrono>
 
 struct compStruct {
   bool operator() (Edge e1, Edge e2) {
@@ -64,6 +65,15 @@ long Graph::getNodePosition(Node &node) {
   return -1;
 };
 
+Node Graph::getNode(long &id) {
+  for (std::vector<Node>::iterator it = nodes.begin(); it != nodes.end(); it++) {
+    if (it->id == id) {
+      return *it;
+    }
+  }
+  return -1;
+}
+
 /**
  *  returns nearest edge in vector graph.edges to the input coords (lon, lat)
  */
@@ -108,9 +118,7 @@ double Graph::calcDistance(double lat1, double lon1, double lat2, double lon2) {
 /**
  * 
  */
-DijkstraVertex::DijkstraVertex(int nodeId) : nodeId(nodeId), predNodeId(-1), cost(std::numeric_limits<double>::max()), visited(false) {
-
-}
+DijkstraVertex::DijkstraVertex(int nodeId) : nodeId(nodeId), predNodeId(-1), cost(std::numeric_limits<double>::max()), visited(false) {}
 
 /**
  * 
@@ -140,10 +148,12 @@ bool DijkstraPriorityQueueVertex::operator< (const DijkstraPriorityQueueVertex &
 };
 
 /**
- * 
+ * Run the dijkstra from a given point.
  */
-void Graph::dijkstraCalcPaths(DijkstraStructure &dijkstraStruct, int sourceNodeId) {
-  std::cout << std::endl << "in Dijkstra" << std::endl; // output
+void Graph::dijkstraCalcPaths(DijkstraStructure &dijkstraStruct, int sourceNodeId, std::vector<int> otherPositions) {
+  auto end = std::chrono::system_clock::now();
+  std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+  std::cout << std::endl << std::ctime(&end_time) << "in Dijkstra" << std::endl; // output
 
   int currentNodeId = sourceNodeId;
   int currentEdgeId = offset[sourceNodeId];
@@ -191,11 +201,44 @@ void Graph::dijkstraCalcPaths(DijkstraStructure &dijkstraStruct, int sourceNodeI
       currentEdgeId++;
       currentNeighborNodeId = edges[currentEdgeId].tgtNodeId;
     }
+
+    bool allIn = true;
+    for (int i = 0; i < otherPositions.size(); i++) {
+      if (!dijkstraStruct.vertices[otherPositions[i]].visited) {
+        allIn = false;
+      }
+    }
+    if (allIn) {
+      break;
+    }
+
+    // for (int i = 0; i < dijkstraStruct.vertices.size(); i++) {
+    //   for (int j = 0; j < otherPositions.size(); j++) {
+    //     if (dijkstraStruct.vertices[otherPositions[i]].nodeId == otherPositions[j]) {
+    //       // std::cout << "first condition true" << std::endl;
+    //       if (!dijkstraStruct.vertices[otherPositions[i]].visited) {
+    //         // std::cout << "second condition true" << std::endl;
+    //         allIn = false;
+    //         break;
+    //       }
+    //     }
+    //   }
+    //   if (!allIn) {
+    //     break;
+    //   }
+    // }
+    // if (allIn) {
+    //   break;
+    // }
+
   }
 
   std::cout << "leaving Dijkstra" << std::endl; // output
 }
 
+/**
+ * Setup data structure for dijkstra.
+ */
 void Graph::dijkstraStructInit(int sourceNodeId, DijkstraStructure &dijkstraStruct) {
   for (int i = 0; i < offset.size(); i++) {
     dijkstraStruct.vertices.push_back(DijkstraVertex(i));
@@ -204,6 +247,9 @@ void Graph::dijkstraStructInit(int sourceNodeId, DijkstraStructure &dijkstraStru
   dijkstraStruct.priorityQueue.push(dijkstraStruct.vertices[sourceNodeId]);
 };
 
+/**
+ * Get the path in given dijkstra structure for a given start and end point.
+ */
 std::vector<int> Graph::dijkstraPath(int start, int end, DijkstraStructure &dijkstraStruct) {
   std::vector<int> path;
   int currentNodeId = start;
