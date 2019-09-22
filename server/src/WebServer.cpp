@@ -15,7 +15,7 @@ void WebServer::start(Graph * graph) {
       // for debugging
       // auto web_root_path = boost::filesystem::canonical("client");
       // without debugging
-      auto web_root_path = boost::filesystem::canonical("../../vue-client/dist");
+      auto web_root_path = boost::filesystem::canonical("../../client");
 
       auto path = boost::filesystem::canonical(web_root_path / request->path);
       // Check if path is within web_root_path
