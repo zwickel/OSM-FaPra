@@ -28,6 +28,9 @@ struct DijkstraVertex {
   bool operator< (const DijkstraVertex &vertex) const;
 };
 
+/**
+ * 
+ */
 struct DijkstraPriorityQueueVertex {
   DijkstraPriorityQueueVertex(DijkstraVertex &vertex);
 
@@ -36,6 +39,9 @@ struct DijkstraPriorityQueueVertex {
   bool operator< (const DijkstraPriorityQueueVertex &queueVertex) const;
 };
 
+/**
+ * 
+ */
 struct DijkstraStructure {
   std::vector<DijkstraVertex> vertices;
   std::priority_queue<DijkstraPriorityQueueVertex> priorityQueue;
@@ -50,7 +56,9 @@ struct DijkstraStructure {
 
 // typedef std::vector<std::vector<neighbor>> neighbors;
 
-
+/**
+ * 
+ */
 struct Graph {
   std::unordered_map<std::int64_t, int> osmNodeIdVectorIndexMap;
   std::vector<Node> nodes;
@@ -61,12 +69,13 @@ struct Graph {
   int edgesCounter;
   void genOffset();
   void sortEdges();
+  Node getNode(long &id);
   Node getNearestNode(double lon, double lat);
   long getNodePosition(Node &node);
   // Edge getNearestEdge(double lon, double lat);
   double calcDistance(double lat1, double lon1, double lat2, double lon2);
   // void foreignCalcEdgeDistance(Edge edge);
-  void dijkstraCalcPaths(DijkstraStructure &dijkstraStruct, int sourceNodeId);
+  void dijkstraCalcPaths(DijkstraStructure &dijkstraStruct, int sourceNodeId, std::vector<int> otherPositions);
   void dijkstraStructInit(int sourceNodeId, DijkstraStructure &dijkstraStruct);
   std::vector<int> dijkstraPath(int source, int end, DijkstraStructure &dijkstraStruct);
 };
