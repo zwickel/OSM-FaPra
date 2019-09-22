@@ -22,6 +22,7 @@ Unzip the osm-fapra-ma.zip archive in a folder of your choice.
 #### osmpbf
 
 ```sh
+$ mkdir OSM-FaPra/server/lib
 $ cd OSM-FaPra/server/lib
 
 $ git clone https://github.com/inphos42/osmpbf
