@@ -2,6 +2,9 @@
 
 using namespace boost::property_tree; // for requests with .json
 
+/**
+ * Configuration for web server.
+ */
 void WebServer::start(Graph * graph) {
   HttpServer server;
   server.config.port = 8091;
@@ -12,13 +15,10 @@ void WebServer::start(Graph * graph) {
   // Can for instance be used to retrieve an HTML 5 client that uses REST-resources on this server
   server.default_resource["GET"] = [](std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
     try {
-      // for debugging
-      // auto web_root_path = boost::filesystem::canonical("client");
-      // without debugging
       auto web_root_path = boost::filesystem::canonical("../../client");
 
       auto path = boost::filesystem::canonical(web_root_path / request->path);
-      // Check if path is within web_root_path
+      // Check if path is within web_root_path.
       if(std::distance(web_root_path.begin(), web_root_path.end()) > std::distance(path.begin(), path.end()) ||
          !std::equal(web_root_path.begin(), web_root_path.end(), path.begin()))
         throw std::invalid_argument("path must be within root path");
@@ -88,23 +88,27 @@ void WebServer::start(Graph * graph) {
 
   /**
    * POST-request
-   * input coords (lon, lat) where the user clicked
-   * return sends back the coords of the nearest node to the coords from input
+   * Is queried each time the user clicks on a position on the map in the web interface.
+   * Input coords (lon, lat) where the user clicked.
+   * Return sends back the coords of the nearest node to the coords from input.
    */  
   server.resource["^/getnearestnode$"]["POST"] = [&](std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
     
     try
     {
+      // read request body
       ptree pt;
       read_json(request->content, pt);
 
       double lon = pt.get<double>("lon");
       double lat = pt.get<double>("lat");
 
+      // get nearest node to the transmitted coordinates
       Node nearestNode = graph->getNearestNode(lon, lat);
       std::cout << "nearestNode.id: " << nearestNode.id << std::endl;
       long nodeId = graph->getNodePosition(nearestNode);
 
+      // write response
       std::string jsonResponse = "{\"coords\": {\"lon\":" + std::to_string(nearestNode.lon) + ", \"lat\":" + std::to_string(nearestNode.lat) + "}, \"id\":" + std::to_string(nodeId) + "}";
 
       *response << "HTTP/1.1 200 OK\r\n" << "Content-length: " << jsonResponse.length() << "\r\n\r\n" << jsonResponse;
@@ -118,7 +122,9 @@ void WebServer::start(Graph * graph) {
 
   /**
    * POST-request
-   *
+   * Inputs are the start positions selected in the web interface.
+   * The function executes dijkstras from the start positions.
+   * Returns the position where the start positions should meet and the paths from the start positions to this meeting point.
    */
   server.resource["^/getpaths$"]["POST"] = [&] (std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
 
@@ -131,8 +137,9 @@ void WebServer::start(Graph * graph) {
       // std::cout << "center:" << center << std::endl;
 
       // bool first = true;
-      std::vector<int> ids;
 
+      // read all the sent start positions and write to vector ids
+      std::vector<int> ids;
       for (ptree::const_iterator it = pt.begin(); it != pt.end(); ++it) {
         // if (first) {
         //   first = false;
@@ -147,9 +154,10 @@ void WebServer::start(Graph * graph) {
       // DijkstraStructure dijkstraStruct;
       // graph->dijkstraCalcPaths(dijkstraStruct, center);
 
+
       std::vector<std::vector<int>> results;
       std::vector<DijkstraStructure> dijkstraStructs;
-      // call dijkstra for every position
+      // call dijkstra for every start position
       for (int i = 0; i < ids.size(); i++) {
         std::cout << std::endl << "in loop " << i + 1 << " from " << ids.size() << std::endl;
         DijkstraStructure dijkstraStruct;
@@ -157,7 +165,7 @@ void WebServer::start(Graph * graph) {
         graph->dijkstraCalcPaths(dijkstraStructs[i], ids[i], ids);
       }
 
-      std::cout << "looking for best costs" << std::endl;
+      // std::cout << "looking for best costs" << std::endl; // output
       double bestCost = std::numeric_limits<double>::max();
       long bestNodeId = 0;
 
@@ -166,57 +174,59 @@ void WebServer::start(Graph * graph) {
         std::vector<double> costs;
         costs.push_back(dijkstraStructs[0].vertices[i].cost);
 
+        // for each dijkstra struct check if the current node is visited
         for (int j = 1; j < dijkstraStructs.size(); j++) {
-          // std::cout << "do for other dijkstra structs" << std::endl;
+          // break if the vertex has not been in one of the before traversed dijkstras
           if (j > costs.size()) {
             break;
           }
-          // for (int k = 0; k < dijkstraStructs[j].vertices.size(); k++) {
-            // if (dijkstraStructs[j].vertices[nid].nodeId == nid) {
-            if (dijkstraStructs[j].vertices[nid].visited) {
-              costs.push_back(dijkstraStructs[j].vertices[nid].cost);
+          if (dijkstraStructs[j].vertices[nid].visited) {
+            costs.push_back(dijkstraStructs[j].vertices[nid].cost);
 
-              if (costs.size() == dijkstraStructs.size()) {
-                // std::cout << "found node used by every dijkstra" << std::endl; // output
-                double currentCost = 0.0;
-                double intermediateResult = 0.0;
-                for (int x = 0; x < costs.size(); x++) {
-                  for (int y = x; y < costs.size(); y++) {
-                    intermediateResult = fabs(costs[x] - costs[y]);
-                    currentCost = currentCost + intermediateResult;
-                    }
+            // if the node is visited in each dijkstra struct it is potentially a candidate for the meeting point and the cost variance is calculated
+            if (costs.size() == dijkstraStructs.size()) {
+              // std::cout << "found node used by every dijkstra" << std::endl; // output
+              double currentCost = 0.0;
+              double intermediateResult = 0.0;
+              for (int x = 0; x < costs.size(); x++) {
+                for (int y = x; y < costs.size(); y++) {
+                  intermediateResult = fabs(costs[x] - costs[y]);
+                  currentCost = currentCost + intermediateResult;
                   }
-                  if (currentCost < bestCost) {
-                    bestCost = currentCost;
-                    bestNodeId = nid;
-                    // std::cout << "new best cost: " << bestCost << std::endl;  // output
                 }
+                // if the cost variance is the smallest untili now it is set as the meeting point
+                if (currentCost < bestCost) {
+                  bestCost = currentCost;
+                  bestNodeId = nid;
+                  // std::cout << "new best cost: " << bestCost << std::endl;  // output
               }
-              continue;
             }
-          // }
+            continue;
+          }
         }
       }
       
-      std::cout << "ids: " << ids.size() << std::endl;
+      // std::cout << "ids: " << ids.size() << std::endl;
       for (int i = 0;  i < ids.size(); i++) {
         std::cout << "getting path " << ids[i] << " to " << bestNodeId << std::endl;
         results.push_back(graph->dijkstraPath(bestNodeId/*center*/, ids[i], dijkstraStructs[i]));
       }
 
+      // write response
+      // the meeting point
       std::string jsonResponse = "{";
-
       jsonResponse += "\"center\": {";
       jsonResponse += "\"coords\": {\"lon\":" + std::to_string(graph->nodes[bestNodeId].lon) + ", \"lat\":" + std::to_string(graph->nodes[bestNodeId].lat) + "}, \"id\":" + std::to_string(bestNodeId) + "},";
       jsonResponse += "\"paths\": {";
 
+      // and the paths from the start positions to the meeting point
       for (int i = 0; i < results.size(); i++) {
         jsonResponse += "\"" + std::to_string(i) + "\":[";
         for (int j = 0; j < results[i].size(); j++) {
           jsonResponse += "{\"lat\": " + std::to_string(graph->nodes[results[i][j]].lat) + ", \"lon\": " + std::to_string(graph->nodes[results[i][j]].lon) + "},";
           if (j == results[i].size() - 1) {
-          jsonResponse.pop_back();
-        }
+            jsonResponse.pop_back();
+          }
         }
         jsonResponse += "],";
         if (i == results.size() - 1) {

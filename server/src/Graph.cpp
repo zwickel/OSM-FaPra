@@ -1,18 +1,24 @@
 #include "Graph.h"
 #include <chrono>
 
+/**
+ * Comparison struct with the operator to compare two edges.
+ */
 struct compStruct {
   bool operator() (Edge e1, Edge e2) {
     return (e1.srcNodeId < e2.srcNodeId);
   }
 } edgesComparer;
 
+/**
+ * Function to sort edges-array with the comparison operator for edges.
+ */
 void Graph::sortEdges() {
   std::sort(edges.begin(), edges.end(), edgesComparer);
 }
 
 /**
- * generates the offset for the graph
+ * Generates/fills the offset-array for the graph.
  */
 void Graph::genOffset() {
   int i = 0;
@@ -32,7 +38,7 @@ void Graph::genOffset() {
 }
 
 /**
- * returns nearest node in vector graph.nodes to the input coords (lon, lat)
+ * Returns nearest node in vector graph.nodes to the input coords (lon, lat).
  */
 Node Graph::getNearestNode(double lon, double lat) {
   std::cout << "lon: " << lon << ", lat: " << lat << std::endl;
@@ -53,7 +59,7 @@ Node Graph::getNearestNode(double lon, double lat) {
 }
 
 /**
- * returns the local index of a node in the graph.nodes-array
+ * Returns the local index of a node in the graph.nodes-array.
  */
 long Graph::getNodePosition(Node &node) {
   long nodeId = node.id;
@@ -75,7 +81,7 @@ Node Graph::getNode(long &id) {
 }
 
 /**
- *  returns nearest edge in vector graph.edges to the input coords (lon, lat)
+ *  Returns nearest edge in vector graph.edges to the input coords (lon, lat).
  */
 // Edge Graph::getNearestEdge(double lon, double lat) {
 //   std::vector<Edge>::iterator it = edges.begin();
@@ -102,8 +108,7 @@ Node Graph::getNode(long &id) {
 // }
 
 /**
- * calculates the distance of an edge
- * and writes it to its distance member variable
+ * Calculate distance for edge and write it to its distance member variable.
  */
 double Graph::calcDistance(double lat1, double lon1, double lat2, double lon2) {
   double dist = 6378388 * std::acos(std::sin(lat1) * std::sin(lat2) + std::cos(lat1) * std::cos(lat2) * std::cos(lon2 - lon1));
@@ -111,17 +116,13 @@ double Graph::calcDistance(double lat1, double lon1, double lat2, double lon2) {
   return dist;
 }
 
-// void Graph::foreignCalcEdgeDistance(Edge edge) {
-//   GeographicLib::Geodesic::WGS84().Inverse(nodes[edge.srcNodeId].lat, nodes[edge.srcNodeId].lon, nodes[edge.tgtNodeId].lat, nodes[edge.tgtNodeId].lon, edge.distance);
-// }
-
 /**
- * 
+ * Vertex for the dijkstra.
  */
 DijkstraVertex::DijkstraVertex(int nodeId) : nodeId(nodeId), predNodeId(-1), cost(std::numeric_limits<double>::max()), visited(false) {}
 
 /**
- * 
+ * Comparison operator for vertices used in dijkstra.
  */
 bool DijkstraVertex::operator< (const DijkstraVertex &vertex) const {
   if (visited) {
@@ -134,14 +135,14 @@ bool DijkstraVertex::operator< (const DijkstraVertex &vertex) const {
 };
 
 /**
- * 
+ * Vertex for priortiy queue.
  */
 DijkstraPriorityQueueVertex::DijkstraPriorityQueueVertex(DijkstraVertex &vertex) : vertex(vertex) {
 
 }
 
 /**
- * 
+ * Comparison operator vertices in priority queue.
  */
 bool DijkstraPriorityQueueVertex::operator< (const DijkstraPriorityQueueVertex &queueVertex) const {
   return !(vertex < queueVertex.vertex);

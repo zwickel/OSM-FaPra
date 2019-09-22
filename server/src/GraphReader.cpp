@@ -1,5 +1,8 @@
 #include "GraphReader.h"
 
+/**
+ * Parse the read block and get information contained in it.
+ */
 void GraphReader::parseBlock(osmpbf::PrimitiveBlockInputAdaptor & pbi, Graph * graph) {
   // filter for roads
   osmpbf::AndTagFilter roadFilter({
@@ -42,7 +45,6 @@ void GraphReader::parseBlock(osmpbf::PrimitiveBlockInputAdaptor & pbi, Graph * g
             graph->nodesCounter++;
           }
 
-
           // std::cout << srcNodeId << std::endl; // output
           ++refIter;
           for (; refIter != refEnd; ++refIter) {
@@ -57,20 +59,16 @@ void GraphReader::parseBlock(osmpbf::PrimitiveBlockInputAdaptor & pbi, Graph * g
 
             // create new edge to add
             Edge newEdge = Edge(graph->osmNodeIdVectorIndexMap.find(srcNodeId)->second, graph->osmNodeIdVectorIndexMap.find(*refIter)->second, highwayValue);
-
-            // check if edge is already in edges else add it
-            // if (std::find(graph->edges.begin(), graph->edges.end(), newEdge) == graph->edges.end()) {
               
-              // push edge to edgess
-              graph->edges.push_back(newEdge);
-              graph->edgesCounter++;
+            // push edge to edgess
+            graph->edges.push_back(newEdge);
+            graph->edgesCounter++;
 
-              // check if edge is one-way else add backward edge
-              if(!oneWayFilter.matches(way)) {
-                graph->edges.push_back(Edge(graph->osmNodeIdVectorIndexMap.find(*refIter)->second, graph->osmNodeIdVectorIndexMap.find(srcNodeId)->second, highwayValue));
-                graph->edgesCounter++;
-              }
-            // }
+            // check if edge is one-way else add backward edge
+            if(!oneWayFilter.matches(way)) {
+              graph->edges.push_back(Edge(graph->osmNodeIdVectorIndexMap.find(*refIter)->second, graph->osmNodeIdVectorIndexMap.find(srcNodeId)->second, highwayValue));
+              graph->edgesCounter++;
+            }
 
             // std::cout << graph->edgesCounter << std::endl; // output
 
@@ -82,6 +80,9 @@ void GraphReader::parseBlock(osmpbf::PrimitiveBlockInputAdaptor & pbi, Graph * g
   }
 }
 
+/**
+ * Reading the edges from the osm.pbf-file
+ */
 int GraphReader::readEdges(std::string fileName, Graph * graph) {
   osmpbf::OSMFileIn inFile(fileName);
   if (!inFile.open()) {
@@ -100,7 +101,9 @@ int GraphReader::readEdges(std::string fileName, Graph * graph) {
   return 0;
 }
 
-// writes lat and lon values to nodes
+/**
+ * writes lat and lon values to nodes
+ */
 int GraphReader::fillNodes(std::string fileName, Graph * graph) {
   osmpbf::OSMFileIn inFile(fileName);
   if (!inFile.open()) {
@@ -131,11 +134,11 @@ int GraphReader::fillNodes(std::string fileName, Graph * graph) {
         // graph->nodes[nodeIndex].lon = node.lond;
 
         // if(graph->osmNodeIdVectorIndexMap.count(node.id())>0) {
-          const auto& it = graph->osmNodeIdVectorIndexMap.find(node.id());
-          if (it != graph->osmNodeIdVectorIndexMap.end()) {
-            graph->nodes[it->second].lat = node.latd();
-            graph->nodes[it->second].lon = node.lond();
-          }
+        const auto& it = graph->osmNodeIdVectorIndexMap.find(node.id());
+        if (it != graph->osmNodeIdVectorIndexMap.end()) {
+          graph->nodes[it->second].lat = node.latd();
+          graph->nodes[it->second].lon = node.lond();
+        }
         //   graph->nodes[graph->osmNodeIdVectorIndexMap.find(node.id())->second].lon = node.lond();
         // }
       }
