@@ -1,3 +1,5 @@
+var baseUrl = "http://localhost:8091/";
+
 var map = new ol.Map({
   target: "map",
   layers: [
@@ -109,7 +111,7 @@ map.addLayer(edgesLayer);
 
 /**
  * function to get nearest node to coordinates[]-array
- * @return an object with an object 'coords' with two objects ('lon', 'lat)
+ * @return an object with an object 'coords' with two objects ('lon', 'lat')
  */
 function getNearestNode(lonlat) {
   var info;
@@ -117,7 +119,7 @@ function getNearestNode(lonlat) {
   $.ajax({
     method: "POST",
     async: false,
-    url: "http://localhost:8091/getnearestnode",
+    url: baseUrl + "getnearestnode",
     data: '{"lon": ' + lonlat[0] + ', "lat": ' + lonlat[1] + "}"
   }).done(function(data, status, xhr) {
     console.log("nearestNode response: " + data);
@@ -141,7 +143,7 @@ map.on("singleclick", function(e) {
   $("#popup-header").text("clicked at");
   popupOverlay.setPosition(coords);
 
-  markerLonLat = [info.coords.lon, info.coords.lat];
+  var markerLonLat = [info.coords.lon, info.coords.lat];
 
   var marker = new ol.Feature({
     type: "geoMarker",
@@ -280,7 +282,7 @@ function getCenter() {
   // ajax call to calculate directions (dijkstra)
   $.ajax({
     method: "POST",
-    url: "http://localhost:8091/getpaths",
+    url: baseUrl + "getpaths",
     data: data
   }).done(function(res, status, xhr) {
     console.log(res);
