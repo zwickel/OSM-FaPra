@@ -109,6 +109,9 @@ You can access the server with your browser at `http://localhost:8091`
 
 ## Usage
 
+When the application is started the web client is available at `http://localhost:8091`.
+The web client is built with [vue](https://vuejs.org)
+
 The start positions are chosen by clicking on the map.
 On the right side (in the positions list) the newly selected position is displayed.
 It can be deselected/deleted by clicking the x-icon in the upper right corner.
